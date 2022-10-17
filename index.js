@@ -14,32 +14,43 @@ const io = new IOServer(httpServer);
 const PORT = 8080;
 
 
-let productos = new Contenedor("productos", options.mysql);
-let mensajes = new Mensajes("mensajes", options.sqlite3)
+let prod = new Contenedor("productos", options.mysql);
+let msg = new Mensajes("mensajes", options.sqlite3)
 
 // Conectamos websocket
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
     console.log('Usuario con id: ', socket.id, ' se ha conectado')
 
+    let productos = await prod.getAll();
+    let mensajes = await msg.getAll();
     // Socket Chat
-    socket.emit('messages', mensajes.table);
+    socket.emit('messages', mensajes);
 
 	socket.on("new-message", async (data) => {
-		fecha = new Date().toLocaleDateString()
-        await mensajes.addMessage({
-            ...data, fecha
-        });
+		data.fecha = new Date().toLocaleDateString()
+        mensajes.push(data.fecha);
+        msg.addMessage(data);
+
+        console.log(data)
 		
-		io.sockets.emit("messages", mensajes.table);
+		io.sockets.emit("messages", mensajes);
 });
 
     // Socket productos
-    socket.emit("productosList", productos.table )
+    socket.emit("productosList", productos);
+
 
 	socket.on("newProduct", async (data) => {
-		let producto = await productos.getAll();
-		productos.post(producto)
-		io.sockets.emit("productList", productos.table)
+        await productos.addProduct(data);
+
+        // let producto = new Contenedor(data.title, data.price, data.thumbnail)
+        // await prod.addProduct(producto)
+        //     productos = await prod.getAll();
+		// let producto = await prod.getAll();
+		// productos.post(producto)
+        //await prod.addProduct(producto)
+        console.log(data)
+		io.sockets.emit("productList", productos)
 	})
 
 })
@@ -52,7 +63,8 @@ app.set("views", "./views");
 
 
 
-app.use(express.static("public")); //quiza views?
+app.use(express.static("./public"));
+app.set("socketio", io);
 
 
 app.use("/", router);
@@ -62,10 +74,10 @@ router.use(express.json());
 router.use(express.urlencoded({ extended: true }));
 
 
-
+// Agrega el producto a la base de datos mysql
 router.post("/", (req, res) => {
 	const producto = req.body;
-	productos.addProduct(producto);
+	prod.addProduct(producto);
 	res.redirect("/");
 });
 

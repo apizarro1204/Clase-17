@@ -1,4 +1,4 @@
-const socket = io.connect();
+const socket = io();
 
 // Conectamos el cliente y escuchamos el evento messages
 socket.on("messages", (data) => {
@@ -28,13 +28,13 @@ function render(data) {
 }
 // El objeto message en server.js se encuentra vacío, pero esta función le agrega los parámetros al objeto y crea tanto el author como el text.
 function addMessage(e) {
+
     const mensaje = { author: document.getElementById("email").value, text: document.getElementById("texto").value, };
     document.getElementsByClassName("form-control")[0].value = "";
     document.getElementsByClassName("form-control")[1].value = "";
 
     socket.emit("new-message", mensaje);
 
-    return false;
 }
 
 // Productos

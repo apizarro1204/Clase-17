@@ -7,7 +7,7 @@ class Contenedor {
 
     async addProduct(prod){
         try {
-            return await this.db.from(this.table).insert(prod)
+            return await this.db(this.table).insert(prod)
         } catch (error) {
             throw error;
         }
@@ -16,7 +16,7 @@ class Contenedor {
     async getAll() {
         try {
             // knex('tabla').condiciones.campos
-            return await this.db.from(this.table).select("*")
+            return await this.db.select("*").from(this.table)
     
         } catch (error) {
             throw error;
